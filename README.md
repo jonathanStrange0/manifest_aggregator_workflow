@@ -361,7 +361,6 @@ jobs:
 
 ---
 
-## License
+## Socket.dev
 
-MIT or your preferred license. Add a `LICENSE` file if you plan to share this publicly.
-
+Once you have this workflow copying the desired manifest files, you can setup [Socket.dev](https://socket.dev) via the [GitHub App](https://docs.socket.dev/docs/socket-for-github) to watch this repo for commits and PRs.
