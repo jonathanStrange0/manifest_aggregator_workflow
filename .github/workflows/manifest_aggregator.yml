@@ -1,0 +1,154 @@
+name: Aggregate_Manifest_and_SBOM_Files
+
+on:
+  schedule:
+    - cron: '0 2 * * *'     # daily at 02:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aggregate-manifests
+  cancel-in-progress: false
+
+jobs:
+  aggregate-manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout aggregator repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup directories
+        run: |
+          mkdir -p manifests
+          rm -rf manifests/*
+
+      - name: Clone and copy manifests
+        env:
+          GH_TOKEN: ${{ secrets.GHPAT_TOKEN }}   # PAT with repo scope
+        run: |
+          REPOS=(
+            "dktran65g/kotlin-threats-hw-maven-gh"
+            "dktran65g/rust-threats-hw-gh"
+            "dktran65g/java-hw-gradlelockfile-gh"
+            "dktran65g/ruby-threats-hw-gemfile-gh"
+            "dktran65g/java-WebGoat-gh"
+          )
+
+          for repo in "${REPOS[@]}"; do
+            echo "Processing $repo..."
+            repo_name=$(echo "$repo" | cut -d'/' -f2)
+            gh repo clone "$repo" "/tmp/$repo_name" -- --depth 1
+            mkdir -p "manifests/$repo_name"
+
+            # Node
+            find "/tmp/$repo_name" -name "package.json" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "package-lock.json" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "yarn.lock" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "pnpm-lock.yaml" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # Python
+            find "/tmp/$repo_name" -name "requirements.txt" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "Pipfile" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "Pipfile.lock" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "pyproject.toml" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "setup.py" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "environment.yml" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # Go
+            find "/tmp/$repo_name" -name "go.mod" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "go.sum" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # Java / Kotlin
+            find "/tmp/$repo_name" -name "pom.xml" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "build.gradle" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "build.gradle.kts" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "gradle.lockfile" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # Ruby
+            find "/tmp/$repo_name" -name "Gemfile" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "Gemfile.lock" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "*.gemspec" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # .NET
+            find "/tmp/$repo_name" -name "*.csproj" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "packages.config" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "Directory.Packages.props" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # Scala
+            find "/tmp/$repo_name" -name "build.sbt" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "plugins.sbt" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "build.properties" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # Rust
+            find "/tmp/$repo_name" -name "Cargo.toml" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "Cargo.lock" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # C / C++
+            find "/tmp/$repo_name" -name "CMakeLists.txt" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "conanfile.txt" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "conanfile.py" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "vcpkg.json" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # PHP
+            find "/tmp/$repo_name" -name "composer.json" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "composer.lock" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # Swift / Objective-C
+            find "/tmp/$repo_name" -name "Podfile" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "Podfile.lock" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "Package.swift" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "Package.resolved" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # Elixir
+            find "/tmp/$repo_name" -name "mix.exs" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "mix.lock" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            # SBOM and Socket facts
+            find "/tmp/$repo_name" -name "*.cdx.json" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "*.spdx.json" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+            find "/tmp/$repo_name" -name "socket.facts.json" -exec cp {} "manifests/$repo_name/" \; 2>/dev/null || true
+
+            rm -rf "/tmp/$repo_name"
+          done
+
+          # make repo list available to next step
+          printf '%s\n' "${REPOS[@]}" > repos.list
+
+      - name: Create metadata
+        run: |
+          repos_json=$(jq -R -s 'split("\n") | map(select(length>0))' < repos.list)
+          cat > manifests/metadata.json << EOF
+          {
+            "last_updated": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "repositories": $repos_json
+          }
+          EOF
+
+      - name: Configure Git and Push Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifests/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Update manifests - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          git pull --rebase origin main || git pull origin main
+          git push
+
+      - name: Trigger GitHub App analysis
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            /repos/${{ github.repository }}/dispatches \
+            -f event_type='manifest_update'
