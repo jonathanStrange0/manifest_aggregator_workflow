@@ -31,11 +31,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GHPAT_TOKEN }}   # PAT with repo scope
         run: |
           REPOS=(
-            "dktran65g/kotlin-threats-hw-maven-gh"
-            "dktran65g/rust-threats-hw-gh"
-            "dktran65g/java-hw-gradlelockfile-gh"
-            "dktran65g/ruby-threats-hw-gemfile-gh"
-            "dktran65g/java-WebGoat-gh"
+            "jonathanStrange0/app_2"
+            "jonathanStrange0/app_1"
           )
 
           for repo in "${REPOS[@]}"; do
